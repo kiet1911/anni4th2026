@@ -1,0 +1,90 @@
+body {
+    background-image: url("https://getwallpapers.com/wallpaper/full/e/0/b/506424.jpg");
+    background-repeat: no-repeat;
+    background-size: cover;
+    position: relative;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    min-height: 100vh;
+    z-index: 0;
+    /* border: solid 2px red; */
+    overflow-y: hidden;
+}
+
+.second-bg {
+    position: absolute;
+    /* border: solid 1px black; */
+    left: 50%;
+    transform: translateY(-50%);
+    transform: translateX(-50%);
+    height: 100%;
+    width: 100%;
+    z-index: 1;
+    /* bg gif */
+    background-image: url("https://i.pinimg.com/originals/e7/26/31/e7263133066e0dbb3c096108ffd4ed34.gif");
+}
+
+.bgletter {
+    position: absolute;
+    border: solid 1px black;
+    left: 50%;
+    top: 100%;
+    transform: translateY(-50%);
+    transform: translateX(-50%);
+    height: 40%;
+    width: 80%;
+}
+
+.pigoen01 {
+    position: absolute;
+    border: solid 1px black;
+    left: 13%;
+    bottom: 1%;
+    transform: translateY(-50%);
+    transform: translateX(0%);
+    height: 200px;
+    width: 200px;
+    z-index: 2;
+
+    /* bg gif */
+    background-image: url("https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExZnVnNnkwY203N2FqaGpwNDh3Y2EyaGMzaDY0c2RybWYyMHU5YTZveCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/NskoMpY3yKVL0qIl0U/giphy.gif");
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.ribbon {
+    position: absolute;
+    border: solid 1px black;
+    bottom: 0%;
+    left: 50%;
+    transform: translateY(-50%);
+    transform: translateX(-50%);
+    height: 160px;
+    width: 450px;
+    z-index: 1;
+    /* bg gif */
+}
+.ribbon img {
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+}
+
+.pigoen02 {
+    position: absolute;
+    border: solid 1px black;
+    right: 13%;
+    bottom: 1%;
+    transform: translateY(-50%);
+    transform: translateX(0%);
+    height: 200px;
+    width: 200px;
+    z-index: 2;
+
+    /* bg gif */
+    background-image: url("https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExZnVnNnkwY203N2FqaGpwNDh3Y2EyaGMzaDY0c2RybWYyMHU5YTZveCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/NskoMpY3yKVL0qIl0U/giphy.gif");
+    background-repeat: no-repeat;
+    background-size: cover;
+    transform: scaleX(-1);
+}
