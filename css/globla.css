@@ -23,7 +23,7 @@ body {
     z-index: 1;
     opacity: 0.5;
     /* bg gif */
-    background-image: url(/items/flower.gif);
+    background-image: url('/items/flower.gif');
 }
 
 .bgletter {
@@ -65,7 +65,7 @@ body {
     z-index: 2;
 
     /* bg gif */
-    background-image: url(/items/pigoen.gif);
+    background-image: url('/items/pigoen.gif');
     background-repeat: no-repeat;
     background-size: cover;
 }
@@ -101,7 +101,7 @@ body {
     z-index: 2;
 
     /* bg gif */
-    background-image: url(/items/pigoen.gif);
+    background-image: url('/items/pigoen.gif');
     background-size: cover;
     transform: scaleX(-1);
 }
