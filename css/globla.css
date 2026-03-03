@@ -23,7 +23,7 @@ body {
     z-index: 1;
     opacity: 0.5;
     /* bg gif */
-    background-image: url('/items/flower.gif');
+    background-image: url(/img/flower.gif);
 }
 
 .bgletter {
