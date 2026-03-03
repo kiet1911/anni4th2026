@@ -23,7 +23,7 @@ body {
     z-index: 1;
     opacity: 0.5;
     /* bg gif */
-    background-image: url("https://i.pinimg.com/originals/e7/26/31/e7263133066e0dbb3c096108ffd4ed34.gif");
+    background-image: url(/items/flower.gif);
 }
 
 .bgletter {
@@ -65,7 +65,7 @@ body {
     z-index: 2;
 
     /* bg gif */
-    background-image: url("https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExZnVnNnkwY203N2FqaGpwNDh3Y2EyaGMzaDY0c2RybWYyMHU5YTZveCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/NskoMpY3yKVL0qIl0U/giphy.gif");
+    background-image: url(/items/pigoen.gif);
     background-repeat: no-repeat;
     background-size: cover;
 }
@@ -101,8 +101,7 @@ body {
     z-index: 2;
 
     /* bg gif */
-    background-image: url("https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExZnVnNnkwY203N2FqaGpwNDh3Y2EyaGMzaDY0c2RybWYyMHU5YTZveCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/NskoMpY3yKVL0qIl0U/giphy.gif");
-    background-repeat: no-repeat;
+    background-image: url(/items/pigoen.gif);
     background-size: cover;
     transform: scaleX(-1);
 }
@@ -381,7 +380,7 @@ body {
     }
 }
 
-.heart-seal {
+/* .heart-seal {
     position: absolute;
     top: 37%;
     left: 50%;
@@ -394,7 +393,7 @@ body {
     z-index: 4;
     opacity: 1;
     transition: opacity 2s ease;
-}
+} */
 
 .envelope.active .heart-seal {
     opacity: 0;
