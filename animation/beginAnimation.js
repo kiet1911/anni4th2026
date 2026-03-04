@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // TẠO AUDIO ELEMENT
     const pressSound = new Audio();
-    pressSound.src = "/audio/heartSound.mp3"; // Thay bằng file audio của bạn
+    pressSound.src = "/anni4th2026/audio/heartSound.mp3"; // Thay bằng file audio của bạn
     pressSound.volume = 1;
     pressSound.loop = true; // Lặp lại khi đang nhấn giữ
 
@@ -79,12 +79,12 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // Tạo âm thanh nổ khi mở thiệp
     const explosionSound = new Audio();
-    explosionSound.src = '/audio/pageSound.mp3';
+    explosionSound.src = '/anni4th2026/audio/pageSound.mp3';
     explosionSound.volume = 1;
 
     //sound chạy khi mở trang 
     const romaticSound = new Audio();
-    romaticSound.src = '/audio/Perfect.mp3'
+    romaticSound.src = '/anni4th2026/audio/Perfect.mp3'
     romaticSound.volume = 1;
 
     // Tạo progress ring
