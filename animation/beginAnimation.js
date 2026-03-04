@@ -355,8 +355,8 @@ function startGalaxyPhase() {
         ================================= */
 
         const radius = 3;
-        const latSegments = 2;
-        const lonSegments = 2;
+        const latSegments = 10;
+        const lonSegments = 10;
 
         const loader = new THREE.TextureLoader();
         const globeGroup = new THREE.Group();
