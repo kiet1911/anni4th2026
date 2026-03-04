@@ -25,9 +25,8 @@ function animateBox() {
 function letterActive() {
     const envelope = document.querySelector('.envelope');
     // const photoss = document.querySelector('.frame-container');
-    console.log(envelope);
+    // console.log(envelope);
     envelope.style.opacity = 1;
-    document.body.opacity = 0.4;
     // photoss.style.opacity = 1;
     setTimeout(() => {
         envelope.classList.add('active');
@@ -45,11 +44,9 @@ function letterActive() {
                 }
             }
             typeWriter();
-        }, 3000); // chờ animation mở thư xong
-    }, 7000);
+        }, 10); // chờ animation mở thư xong
+    }, 10);
 }
-
-
 
 //count before fly 
 setTimeout(() => {
@@ -57,6 +54,122 @@ setTimeout(() => {
     // letterActive();
 }, 3000);
 
-//letter
+//letter heart animation 
+// Thêm vào file beginAnimation.js hoặc tạo file mới
+document.addEventListener('DOMContentLoaded', function() {
+    const heartBtn = document.getElementById('btnHeart');
+    const envelope = document.querySelector('.envelope');
+    let pressTimer;
+    let isPressing = false;
+    
+    // Tạo progress ring
+    const progressRing = document.createElement('div');
+    progressRing.className = 'progress-ring';
+    const progress = document.createElement('div');
+    progress.className = 'progress';
+    progressRing.appendChild(progress);
+    heartBtn.appendChild(progressRing);
+    
+    // Sự kiện khi bắt đầu nhấn
+    heartBtn.addEventListener('mousedown', startPress);
+    heartBtn.addEventListener('touchstart', startPress);
+    
+    // Sự kiện khi kết thúc nhấn
+    heartBtn.addEventListener('mouseup', endPress);
+    heartBtn.addEventListener('touchend', endPress);
+    heartBtn.addEventListener('mouseleave', cancelPress);
+    heartBtn.addEventListener('touchcancel', cancelPress);
+    
+    function startPress(e) {
+        e.preventDefault();
+        if (isPressing) return;
+        
+        isPressing = true;
+        heartBtn.classList.add('pressing');
+        
+        // Reset progress animation
+        const progress = heartBtn.querySelector('.progress');
+        progress.style.animation = 'none';
+        progress.offsetHeight; // Trigger reflow
+        progress.style.animation = 'progressFill 4s linear forwards';
+        
+        // Set timer để mở thiệp sau 4s
+        pressTimer = setTimeout(() => {
+            if (isPressing) {
+                // Mở thiệp
+                letterActive();
+                
+                // Hiệu ứng đặc biệt khi mở
+                createHeartExplosion();
+                
+                // Ẩn nút heart
+                setTimeout(() => {
+                    heartBtn.style.opacity = '0';
+                    heartBtn.style.pointerEvents = 'none';
+                }, 500);
+            }
+        }, 4000);
+    }
+    
+    function endPress(e) {
+        e.preventDefault();
+        cancelPress();
+    }
+    
+    function cancelPress() {
+        if (!isPressing) return;
+        
+        isPressing = false;
+        heartBtn.classList.remove('pressing');
+        clearTimeout(pressTimer);
+        
+        // Reset progress bar
+        const progress = heartBtn.querySelector('.progress');
+        progress.style.animation = 'none';
+    }
+    
+    // Hiệu ứng nổ trái tim khi đủ 4s
+    function createHeartExplosion() {
+        for (let i = 0; i < 12; i++) {
+            setTimeout(() => {
+                const heart = document.createElement('div');
+                heart.className = 'explosion-heart';
+                heart.innerHTML = '❤️';
+                heart.style.left = Math.random() * 100 + '%';
+                heart.style.top = Math.random() * 100 + '%';
+                heart.style.animation = `heartExplosion ${1 + Math.random()}s ease-out forwards`;
+                heart.style.fontSize = (20 + Math.random() * 30) + 'px';
+                heart.style.position = 'fixed';
+                heart.style.zIndex = '100';
+                heart.style.pointerEvents = 'none';
+                document.body.appendChild(heart);
+                
+                setTimeout(() => {
+                    heart.remove();
+                }, 2000);
+            }, i * 100);
+        }
+    }
+});
+
+// Thêm CSS cho hiệu ứng nổ
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes heartExplosion {
+        0% {
+            opacity: 1;
+            transform: scale(0) rotate(0deg);
+        }
+        50% {
+            opacity: 0.8;
+            transform: scale(1.5) rotate(180deg);
+        }
+        100% {
+            opacity: 0;
+            transform: scale(0) rotate(360deg);
+        }
+    }
+`;
+document.head.appendChild(style);
 
 
