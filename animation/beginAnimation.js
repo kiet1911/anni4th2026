@@ -296,7 +296,34 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
 });
+function waitForAllTextures(textures, callback) {
+    let loadedCount = 0;
+    const totalTextures = textures.length;
 
+    textures.forEach((texture, index) => {
+        if (texture.image && texture.image.complete) {
+            loadedCount++;
+            if (loadedCount === totalTextures) {
+                callback();
+            }
+        } else {
+            texture.addEventListener('load', () => {
+                loadedCount++;
+                if (loadedCount === totalTextures) {
+                    callback();
+                }
+            });
+
+            texture.addEventListener('error', () => {
+                // Nếu lỗi vẫn tính là đã load để không bị treo
+                loadedCount++;
+                if (loadedCount === totalTextures) {
+                    callback();
+                }
+            });
+        }
+    });
+}
 function startGalaxyPhase() {
 
     const script = document.createElement("script");
@@ -316,7 +343,7 @@ function startGalaxyPhase() {
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 🔥 nét hơn
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         document.body.appendChild(renderer.domElement);
 
         scene.add(new THREE.AmbientLight(0xffffff, 1));
@@ -355,10 +382,12 @@ function startGalaxyPhase() {
         ================================= */
 
         const radius = 3;
-        const latSegments = 10;
+        const latSegments = 5;
         const lonSegments = 10;
 
-        const loader = new THREE.TextureLoader();
+        const loadingManager = new THREE.LoadingManager();
+        const loader = new THREE.TextureLoader(loadingManager);
+
         const globeGroup = new THREE.Group();
         scene.add(globeGroup);
 
@@ -369,19 +398,17 @@ function startGalaxyPhase() {
         let transitionTime = 0;
         const transitionDuration = 2;
 
+        const TOTAL_IMAGES = 53;
+
         for (let lat = 0; lat < latSegments; lat++) {
             for (let lon = 0; lon < lonSegments; lon++) {
 
-                // const texture = loader.load(`/img/weImage/we1.png`);
-                const index = (lat * lonSegments + lon) % 101;
-                const texture = loader.load(`/anni4th2026/imgWe/we${index}.png`);
-                // 🔥 Làm texture nét hơn
+                const index = (lat * lonSegments + lon) % TOTAL_IMAGES;
+                const texture = loader.load(`/anni4th2026/imgWe/we${index}.webp`);
 
                 texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
                 texture.minFilter = THREE.LinearMipmapLinearFilter;
                 texture.magFilter = THREE.LinearFilter;
-                texture.generateMipmaps = true;
-                texture.needsUpdate = true;
 
                 const phiStart = (lat / latSegments) * Math.PI;
                 const phiLength = Math.PI / latSegments;
@@ -391,7 +418,7 @@ function startGalaxyPhase() {
 
                 const geometry = new THREE.SphereGeometry(
                     radius,
-                    16, 16, // 🔥 tăng segment cho mượt
+                    16, 16,
                     thetaStart, thetaLength,
                     phiStart, phiLength
                 );
@@ -403,69 +430,77 @@ function startGalaxyPhase() {
                 });
 
                 const tile = new THREE.Mesh(geometry, material);
-
                 globeGroup.add(tile);
                 sphereTiles.push(tile);
             }
         }
 
         /* =================================
-           ⏳ START TRANSITION AFTER 5s
+           ⏳ WAIT ALL TEXTURES LOADED
         ================================= */
 
-        setTimeout(() => {
+        loadingManager.onLoad = () => {
 
-            exploded = true;
-            const layers = 6;
+            console.log("✅ All textures loaded");
 
-            sphereTiles.forEach((tile, index) => {
+            // Chờ thêm 4 giây sau khi load xong
+            setTimeout(() => {
 
-                const texture = tile.material.map;
-                const worldPos = tile.position.clone();
-                const direction = worldPos.clone().normalize();
+                exploded = true;
+                const layers = 6;
 
-                const plane = new THREE.Mesh(
-                    new THREE.PlaneGeometry(1.1, 1.1), // 🔥 hơi lớn hơn để nét hơn
-                    new THREE.MeshBasicMaterial({
-                        map: texture,
-                        side: THREE.DoubleSide,
-                        transparent: true,
-                        opacity: 1
-                    })
-                );
+                sphereTiles.forEach((tile, index) => {
 
-                plane.position.copy(worldPos);
+                    const texture = tile.material.map;
 
-                plane.quaternion.setFromUnitVectors(
-                    new THREE.Vector3(0, 0, 1),
-                    direction
-                );
+                    const worldPos = new THREE.Vector3();
+                    tile.getWorldPosition(worldPos);
 
-                const layer = index % layers;
-                const baseAngle = (index * 0.05) % (Math.PI * 2);
+                    const direction = worldPos.clone().normalize();
 
-                plane.userData = {
-                    angle: baseAngle,
-                    speed: 0.0005 + (layer * 0.0003),
-                    radius: 5 + layer * 1.5,
-                    height: (layer - layers / 2) * 1.5,
-                    direction: direction,
-                    rotationSpeed: new THREE.Vector3(
-                        (Math.random() - 0.5) * 0.1,
-                        (Math.random() - 0.5) * 0.1,
-                        (Math.random() - 0.5) * 0.1
-                    ),
-                    originalPos: worldPos.clone(),
-                    phase: Math.random() * Math.PI * 2
-                };
+                    const plane = new THREE.Mesh(
+                        new THREE.PlaneGeometry(1.1, 1.1),
+                        new THREE.MeshBasicMaterial({
+                            map: texture,
+                            side: THREE.DoubleSide,
+                            transparent: true,
+                            opacity: 1
+                        })
+                    );
 
-                scene.add(plane);
-                galaxyTiles.push(plane);
-            });
+                    plane.position.copy(worldPos);
 
-            scene.remove(globeGroup);
+                    plane.quaternion.setFromUnitVectors(
+                        new THREE.Vector3(0, 0, 1),
+                        direction
+                    );
 
-        }, 5000);
+                    const layer = index % layers;
+                    const baseAngle = (index * 0.05) % (Math.PI * 2);
+
+                    plane.userData = {
+                        angle: baseAngle,
+                        speed: 0.0005 + (layer * 0.0003),
+                        radius: 5 + layer * 1.5,
+                        height: (layer - layers / 2) * 1.5,
+                        direction: direction,
+                        rotationSpeed: new THREE.Vector3(
+                            (Math.random() - 0.5) * 0.1,
+                            (Math.random() - 0.5) * 0.1,
+                            (Math.random() - 0.5) * 0.1
+                        ),
+                        originalPos: worldPos.clone(),
+                        phase: Math.random() * Math.PI * 2
+                    };
+
+                    scene.add(plane);
+                    galaxyTiles.push(plane);
+                });
+
+                scene.remove(globeGroup);
+
+            }, 4000);
+        };
 
         /* =================================
            🎬 ANIMATION LOOP
@@ -501,7 +536,6 @@ function startGalaxyPhase() {
                     });
 
                     camera.position.z = 12 + t * 4;
-
                 }
                 else {
 
