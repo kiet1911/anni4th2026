@@ -2,7 +2,7 @@
 //take div
 function animateBox() {
     const box = document.getElementById('bgletter');
-    const startTop = 100;          // %
+    const startTop = 110;          // %
     const endTop = 25;             // %
     const duration = 5000;          // 1 giây
     const startTime = performance.now();
