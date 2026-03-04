@@ -31,7 +31,8 @@ body {
     /* bg gif */
     /* background-image: url(/img/flower.gif); */
 }
-.second-bg img {
+.second-bg video {
+    
     /* border: solid 1px; */
 }
 
@@ -44,6 +45,10 @@ body {
     transform: translateX(-50%);
     height: 40%;
     width: 80%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
     /* animation */
     animation: floating 1.5s ease-in-out infinite 0.1s
 }
@@ -63,7 +68,7 @@ body {
 }
 
 .pigoen01 {
-    position: absolute;
+    /* position: absolute; */
     border: solid 1px black;
     left: 13%;
     bottom: 1%;
@@ -78,7 +83,7 @@ body {
     background-repeat: no-repeat;
     background-size: contain; */
 }
-.pigoen01 img{
+.pigoen01 video{
     width: 100%;
     height: 100%;
 }
@@ -113,7 +118,7 @@ body {
 }
 
 .pigoen02 {
-    position: absolute;
+    /* position: absolute; */
     border: solid 1px black;
     right: 13%;
     bottom: 1%;
@@ -128,7 +133,7 @@ body {
     background-size: contain;
     background-repeat: no-repeat; */
 }
-.pigoen02 img{
+.pigoen02 video{
     width: 100%;
     height: 100%;
 }
