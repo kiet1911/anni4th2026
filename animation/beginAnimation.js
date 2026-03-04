@@ -374,7 +374,7 @@ function startGalaxyPhase() {
 
                 // const texture = loader.load(`/img/weImage/we1.png`);
                 const index = (lat * lonSegments + lon) % 101;
-                const texture = loader.load(`anni4th2026/anni4th2026/we${index}.png`);
+                const texture = loader.load(`/anni4th2026/anni4th2026/we${index}.png`);
                 // 🔥 Làm texture nét hơn
 
                 texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
