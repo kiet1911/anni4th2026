@@ -386,8 +386,8 @@ function startGalaxyPhase() {
 
         const radius = 3;
         const latSegments = 5;
-        const lonSegments = 10;
-        const TOTAL_IMAGES = 53;
+        const lonSegments = 8;
+        const TOTAL_IMAGES = 40;
         const TOTAL_TILES = latSegments * lonSegments; // 50 tiles
 
         const loader = new THREE.TextureLoader();
