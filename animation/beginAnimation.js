@@ -316,6 +316,7 @@ function startGalaxyPhase() {
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 🔥 nét hơn
         document.body.appendChild(renderer.domElement);
 
         scene.add(new THREE.AmbientLight(0xffffff, 1));
@@ -354,8 +355,8 @@ function startGalaxyPhase() {
         ================================= */
 
         const radius = 3;
-        const latSegments = 12;
-        const lonSegments = 24;
+        const latSegments = 2;
+        const lonSegments = 2;
 
         const loader = new THREE.TextureLoader();
         const globeGroup = new THREE.Group();
@@ -368,15 +369,19 @@ function startGalaxyPhase() {
         let transitionTime = 0;
         const transitionDuration = 2;
 
-        // Lưu vị trí ban đầu của các tile
-        let initialPositions = [];
-
         for (let lat = 0; lat < latSegments; lat++) {
             for (let lon = 0; lon < lonSegments; lon++) {
 
-                const texture = loader.load(
-                    `https://picsum.photos/300/300?random=${lat * lonSegments + lon}`
-                );
+                // const texture = loader.load(`/img/weImage/we1.png`);
+                const index = (lat * lonSegments + lon) % 101;
+                const texture = loader.load(`anni4th2026/anni4th2026/we${index}.png`);
+                // 🔥 Làm texture nét hơn
+
+                texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+                texture.minFilter = THREE.LinearMipmapLinearFilter;
+                texture.magFilter = THREE.LinearFilter;
+                texture.generateMipmaps = true;
+                texture.needsUpdate = true;
 
                 const phiStart = (lat / latSegments) * Math.PI;
                 const phiLength = Math.PI / latSegments;
@@ -386,7 +391,7 @@ function startGalaxyPhase() {
 
                 const geometry = new THREE.SphereGeometry(
                     radius,
-                    6, 6,
+                    16, 16, // 🔥 tăng segment cho mượt
                     thetaStart, thetaLength,
                     phiStart, phiLength
                 );
@@ -398,10 +403,6 @@ function startGalaxyPhase() {
                 });
 
                 const tile = new THREE.Mesh(geometry, material);
-
-                // Lưu vị trí ban đầu trên mặt cầu
-                const pos = tile.position.clone();
-                initialPositions.push(pos);
 
                 globeGroup.add(tile);
                 sphereTiles.push(tile);
@@ -415,22 +416,16 @@ function startGalaxyPhase() {
         setTimeout(() => {
 
             exploded = true;
-            const layers = 6; // Tăng số layers để phân tán tốt hơn
+            const layers = 6;
 
-            // Tạo các mảnh vỡ từ vị trí của sphereTiles
             sphereTiles.forEach((tile, index) => {
 
                 const texture = tile.material.map;
-
-                // Lấy vị trí hiện tại của tile trên globe
                 const worldPos = tile.position.clone();
-
-                // Hướng từ tâm ra ngoài
                 const direction = worldPos.clone().normalize();
 
-                // Tạo mảnh vỡ là plane
                 const plane = new THREE.Mesh(
-                    new THREE.PlaneGeometry(0.9, 0.9),
+                    new THREE.PlaneGeometry(1.1, 1.1), // 🔥 hơi lớn hơn để nét hơn
                     new THREE.MeshBasicMaterial({
                         map: texture,
                         side: THREE.DoubleSide,
@@ -439,64 +434,38 @@ function startGalaxyPhase() {
                     })
                 );
 
-                // Đặt vị trí ban đầu trùng với tile trên globe
                 plane.position.copy(worldPos);
 
-                // Xoay plane để hướng ra ngoài
                 plane.quaternion.setFromUnitVectors(
                     new THREE.Vector3(0, 0, 1),
                     direction
                 );
 
                 const layer = index % layers;
-
-                // Tạo góc riêng cho mỗi tile dựa trên index để tránh trùng
                 const baseAngle = (index * 0.05) % (Math.PI * 2);
 
-                // Lưu dữ liệu cho hiệu ứng nổ - ĐIỀU CHỈNH THÔNG SỐ
                 plane.userData = {
-                    angle: baseAngle, // Góc cố định dựa trên index
-                    speed: 0.0005 + (layer * 0.0003) + (Math.random() * 0.0002), // GIẢM TỐC ĐỘ (chậm hơn 4 lần)
-                    radius: 5 + layer * 1.5 + (index % 7) * 0.4, // Bán kính khác nhau để không đè
-                    height: (layer - layers / 2) * 1.5 + (Math.sin(index) * 1.2), // Độ cao khác nhau
+                    angle: baseAngle,
+                    speed: 0.0005 + (layer * 0.0003),
+                    radius: 5 + layer * 1.5,
+                    height: (layer - layers / 2) * 1.5,
                     direction: direction,
-                    explodeSpeed: 0.15 + Math.random() * 0.1,
                     rotationSpeed: new THREE.Vector3(
                         (Math.random() - 0.5) * 0.1,
                         (Math.random() - 0.5) * 0.1,
                         (Math.random() - 0.5) * 0.1
                     ),
                     originalPos: worldPos.clone(),
-                    state: 'exploding',
-                    phase: Math.random() * Math.PI * 2 // Thêm phase cho dao động độ cao
+                    phase: Math.random() * Math.PI * 2
                 };
-
-                plane.scale.set(0.8, 0.8, 0.8);
 
                 scene.add(plane);
                 galaxyTiles.push(plane);
             });
 
-            // Xóa globe group khỏi scene để chỉ còn các mảnh vỡ
             scene.remove(globeGroup);
 
         }, 5000);
-
-
-        /* =================================
-           🧠 EASING FUNCTION
-        ================================= */
-
-        function easeInOutCubic(t) {
-            return t < 0.5
-                ? 4 * t * t * t
-                : 1 - Math.pow(-2 * t + 2, 3) / 2;
-        }
-
-        function easeOutCubic(t) {
-            return 1 - Math.pow(1 - t, 3);
-        }
-
 
         /* =================================
            🎬 ANIMATION LOOP
@@ -508,7 +477,6 @@ function startGalaxyPhase() {
             stars.rotation.y += 0.0003;
 
             if (!exploded) {
-                // Quay globe
                 globeGroup.rotation.y += 0.002;
             }
             else {
@@ -519,100 +487,38 @@ function startGalaxyPhase() {
                     let t = transitionTime / transitionDuration;
                     if (t > 1) t = 1;
 
-                    // HIỆU ỨNG NỔ TUNG
-                    galaxyTiles.forEach((tile, i) => {
+                    galaxyTiles.forEach(tile => {
 
-                        if (t < 0.4) {
-                            // Phase 1: Bắn ra từ tâm (0 - 0.4)
-                            const explodeProgress = t / 0.4; // 0 to 1
+                        const dir = tile.userData.direction;
+                        const distance = t * 3;
 
-                            // Di chuyển theo hướng từ tâm
-                            const dir = tile.userData.direction;
-                            const distance = explodeProgress * 3; // Bay ra xa 3 đơn vị
+                        tile.position.x = tile.userData.originalPos.x + dir.x * distance;
+                        tile.position.y = tile.userData.originalPos.y + dir.y * distance;
+                        tile.position.z = tile.userData.originalPos.z + dir.z * distance;
 
-                            tile.position.x = tile.userData.originalPos.x + dir.x * distance;
-                            tile.position.y = tile.userData.originalPos.y + dir.y * distance;
-                            tile.position.z = tile.userData.originalPos.z + dir.z * distance;
-
-                            // Xoay nhanh
-                            tile.rotation.x += tile.userData.rotationSpeed.x * 2;
-                            tile.rotation.y += tile.userData.rotationSpeed.y * 2;
-                            tile.rotation.z += tile.userData.rotationSpeed.z * 2;
-
-                            tile.material.opacity = 1;
-                            tile.scale.setScalar(0.8 + explodeProgress * 0.4);
-                        }
-                        else if (t < 0.7) {
-                            // Phase 2: Tiếp tục bay và bắt đầu ổn định (0.4 - 0.7)
-                            const phase2Progress = (t - 0.4) / 0.3; // 0 to 1
-
-                            // Tiếp tục bay ra xa thêm một chút
-                            const dir = tile.userData.direction;
-                            tile.position.x += dir.x * 0.08;
-                            tile.position.y += dir.y * 0.08;
-                            tile.position.z += dir.z * 0.08;
-
-                            // Xoay chậm lại
-                            tile.rotation.x += tile.userData.rotationSpeed.x * 0.5;
-                            tile.rotation.y += tile.userData.rotationSpeed.y * 0.5;
-
-                            tile.material.opacity = 1;
-                            tile.scale.setScalar(1.2 - phase2Progress * 0.2);
-                        }
-                        else {
-                            // Phase 3: Chuẩn bị vào quỹ đạo (0.7 - 1.0)
-                            const phase3Progress = (t - 0.7) / 0.3; // 0 to 1
-
-                            // Từ từ di chuyển về vị trí quỹ đạo ban đầu
-                            const targetR = tile.userData.radius;
-                            const targetAngle = tile.userData.angle;
-
-                            const targetX = Math.cos(targetAngle) * targetR;
-                            const targetZ = Math.sin(targetAngle) * targetR;
-                            const targetY = tile.userData.height;
-
-                            // Lerp đến vị trí mục tiêu
-                            tile.position.x += (targetX - tile.position.x) * 0.05;
-                            tile.position.y += (targetY - tile.position.y) * 0.05;
-                            tile.position.z += (targetZ - tile.position.z) * 0.05;
-
-                            tile.rotation.x *= 0.98;
-                            tile.rotation.y *= 0.98;
-
-                            tile.material.opacity = 1;
-                            tile.scale.setScalar(1);
-                        }
+                        tile.rotation.x += tile.userData.rotationSpeed.x;
+                        tile.rotation.y += tile.userData.rotationSpeed.y;
                     });
 
-                    // 🎥 Camera zoom out
                     camera.position.z = 12 + t * 4;
 
                 }
                 else {
-                    // GIAI ĐOẠN QUỸ ĐẠO GALAXY - ĐÃ ĐIỀU CHỈNH
+
                     galaxyTiles.forEach(tile => {
 
-                        // Cập nhật góc với tốc độ chậm hơn
                         tile.userData.angle += tile.userData.speed;
 
                         const r = tile.userData.radius;
                         const a = tile.userData.angle;
 
-                        // Thêm dao động nhẹ cho độ cao để tạo hiệu ứng lớp
-                        const heightOffset = Math.sin(a * 2 + tile.userData.phase) * 1.2;
-
-                        // Quỹ đạo xoắn ốc
                         tile.position.x = Math.cos(a) * r;
                         tile.position.z = Math.sin(a) * r;
-                        tile.position.y = tile.userData.height + heightOffset;
+                        tile.position.y = tile.userData.height +
+                            Math.sin(a * 2 + tile.userData.phase) * 1.2;
 
                         tile.lookAt(0, 0, 0);
-
-                        // Xoay nhẹ
-                        tile.rotation.x += 0.005;
-                        tile.rotation.y += 0.005;
                     });
-
                 }
             }
 
@@ -626,7 +532,6 @@ function startGalaxyPhase() {
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
-
     };
 
     document.head.appendChild(script);
