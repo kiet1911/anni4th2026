@@ -341,9 +341,12 @@ function startGalaxyPhase() {
         );
         camera.position.z = 15;
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        const renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            powerPreference: "high-performance"
+        });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
         document.body.appendChild(renderer.domElement);
 
         scene.add(new THREE.AmbientLight(0xffffff, 1));
@@ -353,11 +356,11 @@ function startGalaxyPhase() {
         ================================= */
 
         const starGeometry = new THREE.BufferGeometry();
-        const starCount = 4000;
+        const starCount = 1500;
         const positions = new Float32Array(starCount * 3);
 
         for (let i = 0; i < starCount; i++) {
-            const r = 1000;
+            const r = 600;
             positions[i * 3] = (Math.random() - 0.5) * r;
             positions[i * 3 + 1] = (Math.random() - 0.5) * r;
             positions[i * 3 + 2] = (Math.random() - 0.5) * r;
@@ -370,7 +373,7 @@ function startGalaxyPhase() {
 
         const starMaterial = new THREE.PointsMaterial({
             color: 0xffffff,
-            size: 1.2,
+            size: 0.6,
             sizeAttenuation: true
         });
 
@@ -378,15 +381,16 @@ function startGalaxyPhase() {
         scene.add(stars);
 
         /* =================================
-           🌍 GLOBE GRID
+           🌍 GLOBE GRID - LOAD ẢNH THEO LÔ
         ================================= */
 
         const radius = 3;
         const latSegments = 5;
         const lonSegments = 10;
+        const TOTAL_IMAGES = 53;
+        const TOTAL_TILES = latSegments * lonSegments; // 50 tiles
 
-        const loadingManager = new THREE.LoadingManager();
-        const loader = new THREE.TextureLoader(loadingManager);
+        const loader = new THREE.TextureLoader();
 
         const globeGroup = new THREE.Group();
         scene.add(globeGroup);
@@ -398,121 +402,265 @@ function startGalaxyPhase() {
         let transitionTime = 0;
         const transitionDuration = 2;
 
-        const TOTAL_IMAGES = 53;
+        // Cache texture
+        const textureCache = {};
 
+        // Hiển thị loading indicator
+        const loadingDiv = document.createElement('div');
+        loadingDiv.style.position = 'absolute';
+        loadingDiv.style.top = '50%';
+        loadingDiv.style.left = '50%';
+        loadingDiv.style.transform = 'translate(-50%, -50%)';
+        loadingDiv.style.color = 'white';
+        loadingDiv.style.fontFamily = 'Arial, sans-serif';
+        loadingDiv.style.fontSize = '20px';
+        loadingDiv.style.textShadow = '0 0 10px rgba(255,255,255,0.5)';
+        loadingDiv.style.zIndex = '1000';
+        loadingDiv.style.backgroundColor = 'rgba(0,0,0,0.7)';
+        loadingDiv.style.padding = '20px 40px';
+        loadingDiv.style.borderRadius = '10px';
+        loadingDiv.style.backdropFilter = 'blur(5px)';
+        loadingDiv.style.border = '1px solid rgba(255,255,255,0.2)';
+        loadingDiv.innerText = 'Đang tải ảnh... 0/50';
+        document.body.appendChild(loadingDiv);
+
+        let loadedCount = 0;
+        let texturesToLoad = [];
+
+        // Tạo mảng các index cần load
         for (let lat = 0; lat < latSegments; lat++) {
             for (let lon = 0; lon < lonSegments; lon++) {
-
                 const index = (lat * lonSegments + lon) % TOTAL_IMAGES;
-                const texture = loader.load(`/anni4th2026/imgWe/we${index}.webp`);
-
-                texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-                texture.minFilter = THREE.LinearMipmapLinearFilter;
-                texture.magFilter = THREE.LinearFilter;
-
-                const phiStart = (lat / latSegments) * Math.PI;
-                const phiLength = Math.PI / latSegments;
-
-                const thetaStart = (lon / lonSegments) * Math.PI * 2;
-                const thetaLength = (Math.PI * 2) / lonSegments;
-
-                const geometry = new THREE.SphereGeometry(
-                    radius,
-                    16, 16,
-                    thetaStart, thetaLength,
-                    phiStart, phiLength
-                );
-
-                const material = new THREE.MeshBasicMaterial({
-                    map: texture,
-                    transparent: true,
-                    opacity: 1
+                texturesToLoad.push({
+                    lat, lon, index,
+                    key: `tile_${lat}_${lon}`
                 });
-
-                const tile = new THREE.Mesh(geometry, material);
-                globeGroup.add(tile);
-                sphereTiles.push(tile);
             }
         }
 
-        /* =================================
-           ⏳ WAIT ALL TEXTURES LOADED
-        ================================= */
+        // Tạo texture mặc định khi load lỗi
+        function createFallbackTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#333333';
+            ctx.fillRect(0, 0, 256, 256);
+            ctx.fillStyle = '#666666';
+            ctx.font = 'bold 30px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('📸', 128, 128);
 
-        loadingManager.onLoad = () => {
+            const texture = new THREE.CanvasTexture(canvas);
+            return texture;
+        }
 
-            console.log("✅ All textures loaded");
+        // Tạo tile từ texture đã load
+        function createTile(lat, lon, texture) {
+            const phiStart = (lat / latSegments) * Math.PI;
+            const phiLength = Math.PI / latSegments;
 
-            // Chờ thêm 4 giây sau khi load xong
+            const thetaStart = (lon / lonSegments) * Math.PI * 2;
+            const thetaLength = (Math.PI * 2) / lonSegments;
+
+            const geometry = new THREE.SphereGeometry(
+                radius,
+                10, 10,
+                thetaStart, thetaLength,
+                phiStart, phiLength
+            );
+
+            const material = new THREE.MeshBasicMaterial({
+                map: texture,
+                transparent: true,
+                opacity: 1,
+                side: THREE.DoubleSide
+            });
+
+            const tile = new THREE.Mesh(geometry, material);
+            globeGroup.add(tile);
+            sphereTiles.push(tile);
+        }
+
+        // Hàm load ảnh theo lô để tránh quá tải RAM
+        async function loadTexturesInBatches(batchSize = 4) {
+            for (let i = 0; i < texturesToLoad.length; i += batchSize) {
+                const batch = texturesToLoad.slice(i, i + batchSize);
+
+                // Load batch hiện tại
+                await Promise.all(batch.map(item => {
+                    return new Promise((resolve) => {
+                        setTimeout(() => {
+                            // Kiểm tra cache
+                            if (textureCache[item.index]) {
+                                console.log(`✅ Using cached texture for we${item.index}.webp`);
+                                createTile(item.lat, item.lon, textureCache[item.index]);
+                                loadedCount++;
+                                loadingDiv.innerText = `Đang tải ảnh... ${loadedCount}/${TOTAL_TILES}`;
+                                resolve();
+                            } else {
+                                console.log(`⏳ Loading we${item.index}.webp...`);
+
+                                // Load texture mới
+                                const texture = loader.load(
+                                    `/anni4th2026/imgWe/we${item.index}.webp`,
+                                    () => {
+                                        // Load thành công
+                                        console.log(`✅ Loaded we${item.index}.webp`);
+                                        textureCache[item.index] = texture;
+
+                                        // Cấu hình texture
+                                        texture.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), 2);
+                                        texture.minFilter = THREE.LinearMipmapLinearFilter;
+                                        texture.magFilter = THREE.LinearFilter;
+
+                                        createTile(item.lat, item.lon, texture);
+                                        loadedCount++;
+                                        loadingDiv.innerText = `Đang tải ảnh... ${loadedCount}/${TOTAL_TILES}`;
+                                        resolve();
+                                    },
+                                    undefined,
+                                    (err) => {
+                                        // Load lỗi
+                                        console.warn(`❌ Failed to load we${item.index}.webp:`, err);
+                                        const fallbackTexture = createFallbackTexture();
+                                        createTile(item.lat, item.lon, fallbackTexture);
+                                        loadedCount++;
+                                        loadingDiv.innerText = `Đang tải ảnh... ${loadedCount}/${TOTAL_TILES}`;
+                                        resolve();
+                                    }
+                                );
+                            }
+                        }, 100 * i); // Tăng dần delay để tránh quá tải
+                    });
+                }));
+
+                // Tạm nghỉ giữa các batch
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+
+            // Load xong tất cả
+            console.log("✅ All textures loaded successfully");
+
+            // Xóa loading div
+            loadingDiv.style.transition = 'opacity 1s';
+            loadingDiv.style.opacity = '0';
             setTimeout(() => {
+                if (loadingDiv.parentNode) {
+                    document.body.removeChild(loadingDiv);
+                }
+            }, 1000);
 
-                exploded = true;
-                const layers = 6;
-
-                sphereTiles.forEach((tile, index) => {
-
-                    const texture = tile.material.map;
-
-                    const worldPos = new THREE.Vector3();
-                    tile.getWorldPosition(worldPos);
-
-                    const direction = worldPos.clone().normalize();
-
-                    const plane = new THREE.Mesh(
-                        new THREE.PlaneGeometry(1.1, 1.1),
-                        new THREE.MeshBasicMaterial({
-                            map: texture,
-                            side: THREE.DoubleSide,
-                            transparent: true,
-                            opacity: 1
-                        })
-                    );
-
-                    plane.position.copy(worldPos);
-
-                    plane.quaternion.setFromUnitVectors(
-                        new THREE.Vector3(0, 0, 1),
-                        direction
-                    );
-
-                    const layer = index % layers;
-                    const baseAngle = (index * 0.05) % (Math.PI * 2);
-
-                    plane.userData = {
-                        angle: baseAngle,
-                        speed: 0.0005 + (layer * 0.0003),
-                        radius: 5 + layer * 1.5,
-                        height: (layer - layers / 2) * 1.5,
-                        direction: direction,
-                        rotationSpeed: new THREE.Vector3(
-                            (Math.random() - 0.5) * 0.1,
-                            (Math.random() - 0.5) * 0.1,
-                            (Math.random() - 0.5) * 0.1
-                        ),
-                        originalPos: worldPos.clone(),
-                        phase: Math.random() * Math.PI * 2
-                    };
-
-                    scene.add(plane);
-                    galaxyTiles.push(plane);
-                });
-
-                scene.remove(globeGroup);
-
+            // Chờ 4 giây rồi nổ
+            setTimeout(() => {
+                if (!exploded) {
+                    startExplosion();
+                }
             }, 4000);
-        };
+        }
+
+        // Hàm bắt đầu nổ
+        function startExplosion() {
+            console.log("💥 Starting explosion!");
+
+            exploded = true;
+            const layers = 6;
+
+            sphereTiles.forEach((tile, index) => {
+
+                const texture = tile.material.map;
+
+                const worldPos = new THREE.Vector3();
+                tile.getWorldPosition(worldPos);
+
+                const direction = worldPos.clone().normalize();
+
+                const plane = new THREE.Mesh(
+                    new THREE.PlaneGeometry(0.9, 0.9),
+                    new THREE.MeshBasicMaterial({
+                        map: texture,
+                        side: THREE.DoubleSide,
+                        transparent: true,
+                        opacity: 1
+                    })
+                );
+
+                plane.position.copy(worldPos);
+
+                plane.quaternion.setFromUnitVectors(
+                    new THREE.Vector3(0, 0, 1),
+                    direction
+                );
+
+                const layer = index % layers;
+                const baseAngle = (index * 0.05) % (Math.PI * 2);
+
+                plane.userData = {
+                    angle: baseAngle,
+                    speed: 0.0005 + (layer * 0.0003),
+                    radius: 5 + layer * 1.5,
+                    height: (layer - layers / 2) * 1.5,
+                    direction: direction,
+                    rotationSpeed: new THREE.Vector3(
+                        (Math.random() - 0.5) * 0.06,
+                        (Math.random() - 0.5) * 0.06,
+                        (Math.random() - 0.5) * 0.06
+                    ),
+                    originalPos: worldPos.clone(),
+                    phase: Math.random() * Math.PI * 2
+                };
+
+                scene.add(plane);
+                galaxyTiles.push(plane);
+            });
+
+            scene.remove(globeGroup);
+
+            // Clean up sphereTiles
+            sphereTiles = [];
+        }
+
+        // Bắt đầu load ảnh theo lô
+        loadTexturesInBatches(4);
+
+        // Thêm timeout an toàn
+        const safetyTimeout = setTimeout(() => {
+            if (!exploded && sphereTiles.length > 0) {
+                console.log("⚠️ Safety timeout - forcing explosion");
+                startExplosion();
+
+                if (loadingDiv.parentNode) {
+                    document.body.removeChild(loadingDiv);
+                }
+            }
+        }, 30000);
 
         /* =================================
            🎬 ANIMATION LOOP
         ================================= */
 
+        let lastTime = performance.now();
+        let frameCount = 0;
+        const targetFPS = 30;
+
         function animate() {
             requestAnimationFrame(animate);
 
-            stars.rotation.y += 0.0003;
+            const currentTime = performance.now();
+            const deltaTime = currentTime - lastTime;
+
+            if (deltaTime < 1000 / targetFPS) {
+                return;
+            }
+
+            lastTime = currentTime;
+            frameCount++;
+
+            stars.rotation.y += 0.0002;
 
             if (!exploded) {
-                globeGroup.rotation.y += 0.002;
+                globeGroup.rotation.y += 0.0015;
             }
             else {
 
@@ -531,8 +679,10 @@ function startGalaxyPhase() {
                         tile.position.y = tile.userData.originalPos.y + dir.y * distance;
                         tile.position.z = tile.userData.originalPos.z + dir.z * distance;
 
-                        tile.rotation.x += tile.userData.rotationSpeed.x;
-                        tile.rotation.y += tile.userData.rotationSpeed.y;
+                        if (t < 0.5) {
+                            tile.rotation.x += tile.userData.rotationSpeed.x;
+                            tile.rotation.y += tile.userData.rotationSpeed.y;
+                        }
                     });
 
                     camera.position.z = 12 + t * 4;
@@ -551,7 +701,9 @@ function startGalaxyPhase() {
                         tile.position.y = tile.userData.height +
                             Math.sin(a * 2 + tile.userData.phase) * 1.2;
 
-                        tile.lookAt(0, 0, 0);
+                        if (frameCount % 2 === 0) {
+                            tile.lookAt(0, 0, 0);
+                        }
                     });
                 }
             }
@@ -565,6 +717,17 @@ function startGalaxyPhase() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Clean up
+        window.addEventListener("beforeunload", () => {
+            renderer.dispose();
+            scene.clear();
+            for (let key in textureCache) {
+                if (textureCache[key]?.dispose) {
+                    textureCache[key].dispose();
+                }
+            }
         });
     };
 
