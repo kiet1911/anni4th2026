@@ -24,6 +24,7 @@ function animateBox() {
 //letter
 function letterActive() {
     const envelope = document.querySelector('.envelope');
+    const buttonSc = document.getElementById('switchPhase');
     // const photoss = document.querySelector('.frame-container');
     // console.log(envelope);
     envelope.style.opacity = 1;
@@ -42,6 +43,9 @@ function letterActive() {
                     i++;
                     setTimeout(typeWriter, speed);
                 }
+                else{
+                    buttonSc.style.display = 'block';
+                }
             }
             typeWriter();
         }, 10); // chờ animation mở thư xong
@@ -56,12 +60,32 @@ setTimeout(() => {
 
 //letter heart animation 
 // Thêm vào file beginAnimation.js hoặc tạo file mới
+// Thêm vào file beginAnimation.js hoặc tạo file mới
 document.addEventListener('DOMContentLoaded', function () {
     const heartBtn = document.getElementById('btnHeart');
     const heartBump = document.getElementById('heart-seal-bump');
     const envelope = document.querySelector('.envelope');
     let pressTimer;
     let isPressing = false;
+
+    // TẠO AUDIO ELEMENT
+    const pressSound = new Audio();
+    pressSound.src = "/audio/heartSound.mp3"; // Thay bằng file audio của bạn
+    pressSound.volume = 1;
+    pressSound.loop = true; // Lặp lại khi đang nhấn giữ
+
+    // Hoặc dùng file local
+    // const pressSound = new Audio('./audio/press-sound.mp3');
+    
+    // Tạo âm thanh nổ khi mở thiệp
+    const explosionSound = new Audio();
+    explosionSound.src = '/audio/pageSound.mp3';
+    explosionSound.volume = 1;
+
+    //sound chạy khi mở trang 
+    const romaticSound = new Audio();
+    romaticSound.src = '/audio/Perfect.mp3'
+    romaticSound.volume = 1;
 
     // Tạo progress ring
     const progressRing = document.createElement('div');
@@ -87,9 +111,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         isPressing = true;
         heartBtn.classList.add('pressing');
-
         heartBump.style.display = 'block';
 
+        // PHÁT AUDIO KHI BẮT ĐẦU NHẤN GIỮ
+        playPressSound();
 
         // Reset progress animation
         const progress = heartBtn.querySelector('.progress');
@@ -100,11 +125,20 @@ document.addEventListener('DOMContentLoaded', function () {
         // Set timer để mở thiệp sau 4s
         pressTimer = setTimeout(() => {
             if (isPressing) {
+                // Dừng âm thanh nhấn giữ
+                stopPressSound();
+                
+                // Phát âm thanh nổ
+                playExplosionSound();
+                
                 // Mở thiệp
                 letterActive();
 
                 // Hiệu ứng đặc biệt khi mở
                 createHeartExplosion();
+
+                //
+                playRomaticSound();
 
                 // Ẩn nút heart
                 setTimeout(() => {
@@ -129,9 +163,59 @@ document.addEventListener('DOMContentLoaded', function () {
         heartBump.style.display = 'none';
         clearTimeout(pressTimer);
 
+        // DỪNG AUDIO KHI KẾT THÚC NHẤN
+        stopPressSound();
+
         // Reset progress bar
         const progress = heartBtn.querySelector('.progress');
         progress.style.animation = 'none';
+    }
+
+    // Hàm phát âm thanh khi nhấn giữ
+    function playPressSound() {
+        pressSound.currentTime = 0; // Reset về đầu
+        pressSound.play().catch(error => {
+            console.log('Không thể phát audio:', error);
+            // Fallback: tạo âm thanh đơn giản nếu không phát được file
+            createBeepSound();
+        });
+    }
+
+    function playRomaticSound(){
+        romaticSound.currentTime = 0 ;
+
+        romaticSound.play().catch(error=>{
+            console.log('Không thể phát audio:', error);
+        })
+    }
+
+    // Hàm dừng âm thanh nhấn giữ
+    function stopPressSound() {
+        pressSound.pause();
+        pressSound.currentTime = 0;
+    }
+
+    // Hàm phát âm thanh nổ
+    function playExplosionSound() {
+        explosionSound.currentTime = 0;
+        explosionSound.play().catch(error => console.log('Không thể phát âm thanh nổ:', error));
+    }
+
+    // Fallback: tạo âm thanh beep đơn giản bằng Web Audio API
+    function createBeepSound() {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.value = 800;
+        gainNode.gain.value = 0.1;
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.start();
+        oscillator.stop(0.1);
     }
 
     // Hiệu ứng nổ trái tim khi đủ 4s
