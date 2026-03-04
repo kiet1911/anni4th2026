@@ -3,7 +3,7 @@
 function animateBox() {
     const box = document.getElementById('bgletter');
     const startTop = 110;          // %
-    const endTop = 25;             // %
+    const endTop = 30;             // %
     const duration = 5000;          // 1 giây
     const startTime = performance.now();
 
@@ -32,7 +32,7 @@ function letterActive() {
         envelope.classList.add('active');
         // Sau khi mở thư thì chạy typing effect
         setTimeout(() => {
-            const text = "To my love Kim Ngân,\n\nHappy Birthday, cutie! May your cake be as sweet as you, and may your smile today shine brighter than all the candles. 🎂✨";
+            const text = "Gửi em Kim Ngân,\n\nHappy Anniversary 4th của tụi mình nha 😘, mới đây đã 4 năm rồi thời gian trôi thật nhanh nhớ những ngày đầu hai đứa còn ngại ngùng với nhau mà tới nay đã 4 năm rồi. Cùng nhau trải qua những lần cãi vả, vui có, buồn có nhưng cuối cùng chúng ta vẫn về với nhau. Cám ơn em vì đã kiên nhẫn và yêu thương anh. Dạ rồi nha, chúc em và anh luôn yêu thương nhau, cùng nhau phát triển, càng hiểu nhau thêm và nhường nhịn nhau hơn nữa nha. Chúc cả hai những năm sau vẫn luôn có nhau, anh yêu kim ngân của anh nhìu nhìu lắm nhóoo 😍🍰🌷";
             const target = document.getElementById("letter-text");
             let i = 0;
             const speed = 50; // tốc độ chữ (ms)
@@ -56,12 +56,13 @@ setTimeout(() => {
 
 //letter heart animation 
 // Thêm vào file beginAnimation.js hoặc tạo file mới
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const heartBtn = document.getElementById('btnHeart');
+    const heartBump = document.getElementById('heart-seal-bump');
     const envelope = document.querySelector('.envelope');
     let pressTimer;
     let isPressing = false;
-    
+
     // Tạo progress ring
     const progressRing = document.createElement('div');
     progressRing.className = 'progress-ring';
@@ -69,65 +70,70 @@ document.addEventListener('DOMContentLoaded', function() {
     progress.className = 'progress';
     progressRing.appendChild(progress);
     heartBtn.appendChild(progressRing);
-    
+
     // Sự kiện khi bắt đầu nhấn
     heartBtn.addEventListener('mousedown', startPress);
     heartBtn.addEventListener('touchstart', startPress);
-    
+
     // Sự kiện khi kết thúc nhấn
     heartBtn.addEventListener('mouseup', endPress);
     heartBtn.addEventListener('touchend', endPress);
     heartBtn.addEventListener('mouseleave', cancelPress);
     heartBtn.addEventListener('touchcancel', cancelPress);
-    
+
     function startPress(e) {
         e.preventDefault();
         if (isPressing) return;
-        
+
         isPressing = true;
         heartBtn.classList.add('pressing');
-        
+
+        heartBump.style.display = 'block';
+
+
         // Reset progress animation
         const progress = heartBtn.querySelector('.progress');
         progress.style.animation = 'none';
         progress.offsetHeight; // Trigger reflow
         progress.style.animation = 'progressFill 4s linear forwards';
-        
+
         // Set timer để mở thiệp sau 4s
         pressTimer = setTimeout(() => {
             if (isPressing) {
                 // Mở thiệp
                 letterActive();
-                
+
                 // Hiệu ứng đặc biệt khi mở
                 createHeartExplosion();
-                
+
                 // Ẩn nút heart
                 setTimeout(() => {
-                    heartBtn.style.opacity = '0';
+                    heartBtn.style.opacity = '1';
+                    heartBtn.style.zIndex = '1';
                     heartBtn.style.pointerEvents = 'none';
                 }, 500);
             }
         }, 4000);
     }
-    
+
     function endPress(e) {
         e.preventDefault();
         cancelPress();
     }
-    
+
     function cancelPress() {
         if (!isPressing) return;
-        
+
         isPressing = false;
         heartBtn.classList.remove('pressing');
+        heartBump.style.display = 'none';
         clearTimeout(pressTimer);
-        
+
         // Reset progress bar
         const progress = heartBtn.querySelector('.progress');
         progress.style.animation = 'none';
     }
-    
+
     // Hiệu ứng nổ trái tim khi đủ 4s
     function createHeartExplosion() {
         for (let i = 0; i < 12; i++) {
@@ -143,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 heart.style.zIndex = '100';
                 heart.style.pointerEvents = 'none';
                 document.body.appendChild(heart);
-                
+
                 setTimeout(() => {
                     heart.remove();
                 }, 2000);
